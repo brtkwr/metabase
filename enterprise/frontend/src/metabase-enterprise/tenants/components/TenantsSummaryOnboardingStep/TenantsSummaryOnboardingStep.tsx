@@ -156,7 +156,7 @@ const RelatedSettingsSection = () => (
   </SimpleGrid>
 );
 
-function getDataPermissionsDescription({
+export function getDataPermissionsDescription({
   strategy,
   tenantName,
   tenantValue,
