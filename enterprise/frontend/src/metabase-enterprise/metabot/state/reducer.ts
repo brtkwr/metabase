@@ -273,6 +273,7 @@ export const metabot = createSlice({
       { payload: codeEdit }: PayloadAction<MetabotCodeEdit>,
     ) => {
       state.reactions.suggestedCodeEdits[codeEdit.buffer_id] = codeEdit;
+      // TODO open the code editor?
     },
     removeSuggestedCodeEdit: (
       state,
