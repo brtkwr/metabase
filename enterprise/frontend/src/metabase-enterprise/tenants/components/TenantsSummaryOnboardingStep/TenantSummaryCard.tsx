@@ -7,11 +7,13 @@ export const TenantSummaryCard = ({
   slug,
   isolationFieldLabel,
   isolationFieldValue,
+  dataPermissionsDescription,
 }: {
   name: string;
   slug: string;
   isolationFieldLabel: string | null;
   isolationFieldValue: string | null;
+  dataPermissionsDescription: string | null;
 }) => {
   return (
     <Paper withBorder p="lg" radius="md">
@@ -47,18 +49,19 @@ export const TenantSummaryCard = ({
             </Stack>
           </Grid.Col>
 
-          <Grid.Col span={4}>
-            <Stack gap={4}>
-              <Text size="xs" c="text-secondary">
-                {t`Data permissions`}
-              </Text>
+          {dataPermissionsDescription && (
+            <Grid.Col span={12}>
+              <Stack gap={4}>
+                <Text size="xs" c="text-secondary">
+                  {t`Data permissions`}
+                </Text>
 
-              <Text size="sm" c="text-primary">
-                {/* TODO(EMB-1268): Add data permissions info when available */}
-                {t`Configured via data segregation`}
-              </Text>
-            </Stack>
-          </Grid.Col>
+                <Text size="sm" c="text-primary">
+                  {dataPermissionsDescription}
+                </Text>
+              </Stack>
+            </Grid.Col>
+          )}
         </Grid>
       </Stack>
     </Paper>

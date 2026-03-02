@@ -45,6 +45,7 @@ const getDefaultPluginTenants = () => ({
   TenantsSummaryOnboardingStep: PluginPlaceholder as React.ComponentType<{
     tenants: CreatedTenantData[];
     strategy?: DataSegregationStrategy | null;
+    selectedFieldIds?: number[];
   }>,
   EditUserStrategySettingsButton: PluginPlaceholder,
   FormTenantWidget: (_props: any) => null as React.ReactElement | null,

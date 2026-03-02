@@ -189,6 +189,7 @@ export const SetupPermissionsAndTenantsPage = () => {
           <PLUGIN_TENANTS.TenantsSummaryOnboardingStep
             tenants={createdTenants}
             strategy={activeStrategy}
+            selectedFieldIds={selectedFieldIds}
           />
         </OnboardingStepper.Step>
       </OnboardingStepper>

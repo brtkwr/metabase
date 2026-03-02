@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { push } from "react-router-redux";
-import { match } from "ts-pattern";
 import { t } from "ttag";
 
 import { RelatedSettingCard } from "metabase/admin/components/RelatedSettingsSection";
@@ -8,10 +7,13 @@ import type { DataSegregationStrategy } from "metabase/embedding/embedding-hub";
 import { useDispatch } from "metabase/lib/redux";
 import type { CreatedTenantData } from "metabase/plugins/oss/tenants";
 import { Button, Flex, SimpleGrid, Stack, Text, Title } from "metabase/ui";
+import type { FieldId } from "metabase-types/api";
 
 import { useListTenantsQuery } from "../../../api/tenants";
+import { getIsolationFieldConfig } from "../CreateTenantsOnboardingStep/isolation-field-config";
 
 import { TenantSummaryCard } from "./TenantSummaryCard";
+import { useRlsFieldsInfo } from "./hooks/use-rls-fields-info";
 
 /**
  * If the user has reloaded the page, we fetch the
@@ -28,9 +30,11 @@ const ISOLATION_ATTRIBUTE_KEYS = [
 export const TenantsSummaryOnboardingStep = ({
   tenants,
   strategy,
+  selectedFieldIds = [],
 }: {
   tenants: CreatedTenantData[];
   strategy?: DataSegregationStrategy | null;
+  selectedFieldIds?: FieldId[];
 }) => {
   const dispatch = useDispatch();
 
@@ -66,7 +70,15 @@ export const TenantsSummaryOnboardingStep = ({
     });
   }, [tenants, tenantsData]);
 
-  const isolationFieldLabel = getIsolationFieldLabel(strategy);
+  const fieldConfig = getIsolationFieldConfig(strategy);
+
+  const {
+    tableNames,
+    columnName,
+    isLoading: isRlsInfoLoading,
+  } = useRlsFieldsInfo(
+    strategy === "row-column-level-security" ? selectedFieldIds : [],
+  );
 
   return (
     <Stack gap="lg">
@@ -80,10 +92,23 @@ export const TenantsSummaryOnboardingStep = ({
             key={tenant.slug}
             name={tenant.name}
             isolationFieldLabel={
-              tenant.dataIsolationFieldValue ? isolationFieldLabel : null
+              tenant.dataIsolationFieldValue
+                ? (fieldConfig?.label ?? null)
+                : null
             }
             isolationFieldValue={tenant.dataIsolationFieldValue || null}
             slug={tenant.slug}
+            dataPermissionsDescription={
+              isRlsInfoLoading
+                ? null
+                : getDataPermissionsDescription({
+                    strategy,
+                    tenantName: tenant.name,
+                    tenantValue: tenant.dataIsolationFieldValue,
+                    tableNames,
+                    columnName,
+                  })
+            }
           />
         ))}
       </Stack>
@@ -131,11 +156,43 @@ const RelatedSettingsSection = () => (
   </SimpleGrid>
 );
 
-export const getIsolationFieldLabel = (
-  strategy: DataSegregationStrategy | null | undefined,
-): string | null =>
-  match(strategy)
-    .with("row-column-level-security", () => "tenant_identifier")
-    .with("connection-impersonation", () => "database_role")
-    .with("database-routing", () => "database_slug")
-    .otherwise(() => null);
+function getDataPermissionsDescription({
+  strategy,
+  tenantName,
+  tenantValue,
+  tableNames,
+  columnName,
+}: {
+  strategy: DataSegregationStrategy | null | undefined;
+  tenantName: string;
+  tenantValue: string;
+  tableNames: string[];
+  columnName: string | null;
+}): string | null {
+  if (!tenantValue) {
+    return null;
+  }
+
+  if (strategy === "row-column-level-security") {
+    if (tableNames.length === 0 || !columnName) {
+      return null;
+    }
+
+    const tableList =
+      tableNames.length === 1
+        ? tableNames[0]
+        : `${tableNames.slice(0, -1).join(", ")} ${t`and`} ${tableNames[tableNames.length - 1]}`;
+
+    return t`All users in ${tenantName} can view rows in the ${tableList} tables where ${columnName} field equals ${tenantValue}.`;
+  }
+
+  if (strategy === "connection-impersonation") {
+    return t`All users in ${tenantName} will connect using the ${tenantValue} database role.`;
+  }
+
+  if (strategy === "database-routing") {
+    return t`All users in ${tenantName} will be routed to the ${tenantValue} database.`;
+  }
+
+  return null;
+}
