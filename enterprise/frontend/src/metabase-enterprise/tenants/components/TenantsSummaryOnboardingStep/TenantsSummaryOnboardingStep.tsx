@@ -53,16 +53,15 @@ export const TenantsSummaryOnboardingStep = ({
 
     return lastTenants.map((tenant) => {
       // Detect which isolation attribute is set on the tenant
-      const isolationKey = ISOLATION_ATTRIBUTE_KEYS.find(
+      const dataIsolationFieldKey = ISOLATION_ATTRIBUTE_KEYS.find(
         (key) => tenant.attributes?.[key] != null,
       );
 
       return {
         name: tenant.name,
         slug: tenant.slug,
-        tenantIdentifier: isolationKey
-          ? (tenant.attributes?.[isolationKey] ?? "")
-          : "",
+        dataIsolationFieldValue:
+          tenant.attributes?.[dataIsolationFieldKey ?? ""] ?? "",
       };
     });
   }, [tenants, tenantsData]);
@@ -81,9 +80,9 @@ export const TenantsSummaryOnboardingStep = ({
             key={tenant.slug}
             name={tenant.name}
             isolationFieldLabel={
-              tenant.tenantIdentifier ? isolationFieldLabel : null
+              tenant.dataIsolationFieldValue ? isolationFieldLabel : null
             }
-            isolationFieldValue={tenant.tenantIdentifier || null}
+            isolationFieldValue={tenant.dataIsolationFieldValue || null}
             slug={tenant.slug}
           />
         ))}

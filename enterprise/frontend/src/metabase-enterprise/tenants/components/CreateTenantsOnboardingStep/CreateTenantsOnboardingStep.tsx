@@ -86,8 +86,8 @@ export const CreateTenantsOnboardingStep = ({
       // Create all tenants sequentially
       for (const tenant of tenants) {
         const attributes =
-          fieldConfig && tenant.tenantIdentifier
-            ? { [fieldConfig.attributeKey]: tenant.tenantIdentifier }
+          fieldConfig && tenant.dataIsolationFieldValue
+            ? { [fieldConfig.attributeKey]: tenant.dataIsolationFieldValue }
             : {};
 
         await createTenant({
@@ -118,10 +118,12 @@ export const CreateTenantsOnboardingStep = ({
     if (!tenant.name.trim() || !tenant.slug.trim()) {
       return false;
     }
+
     // Isolation field is only required when a strategy is selected
-    if (fieldConfig && !tenant.tenantIdentifier.trim()) {
+    if (fieldConfig && !tenant.dataIsolationFieldValue.trim()) {
       return false;
     }
+
     return true;
   });
 
@@ -156,9 +158,9 @@ export const CreateTenantsOnboardingStep = ({
 
               {strategy === "row-column-level-security" && (
                 <TenantIdentifierInput
-                  value={tenant.tenantIdentifier}
+                  value={tenant.dataIsolationFieldValue}
                   onChange={(value) =>
-                    updateTenantCard(index, "tenantIdentifier", value)
+                    updateTenantCard(index, "dataIsolationFieldValue", value)
                   }
                   selectedFieldIds={selectedFieldIds}
                 />
@@ -170,9 +172,9 @@ export const CreateTenantsOnboardingStep = ({
                   <TenantFormField
                     label={fieldConfig.label}
                     description={fieldConfig.description}
-                    value={tenant.tenantIdentifier}
+                    value={tenant.dataIsolationFieldValue}
                     onChange={(value) =>
-                      updateTenantCard(index, "tenantIdentifier", value)
+                      updateTenantCard(index, "dataIsolationFieldValue", value)
                     }
                     placeholder={fieldConfig.placeholder}
                   />
@@ -270,6 +272,6 @@ const getIsolationFieldConfig = (
 
 const createEmptyTenant = (index: number): CreatedTenantData => ({
   name: `Tenant ${index}`,
-  tenantIdentifier: "",
+  dataIsolationFieldValue: "",
   slug: `tenant-${index}`,
 });

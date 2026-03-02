@@ -20,7 +20,7 @@ import { PluginPlaceholder } from "../components/PluginPlaceholder";
 export type CreatedTenantData = {
   name: string;
   slug: string;
-  tenantIdentifier: string;
+  dataIsolationFieldValue: string;
 };
 
 export type TenantCollectionPathItem = {
