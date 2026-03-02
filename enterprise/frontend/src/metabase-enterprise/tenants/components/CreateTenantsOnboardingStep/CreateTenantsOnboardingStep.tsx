@@ -115,18 +115,12 @@ export const CreateTenantsOnboardingStep = ({
     }
   }, [tenants, fieldConfig, createTenant, sendToast, onTenantsCreated]);
 
-  const isValid = tenants.every((tenant) => {
-    if (!tenant.name.trim() || !tenant.slug.trim()) {
-      return false;
-    }
-
-    // Isolation field is only required when a strategy is selected
-    if (fieldConfig && !tenant.dataIsolationFieldValue.trim()) {
-      return false;
-    }
-
-    return true;
-  });
+  const isValid = tenants.every(
+    (tenant) =>
+      tenant.name.trim() &&
+      tenant.slug.trim() &&
+      tenant.dataIsolationFieldValue.trim(),
+  );
 
   return (
     <Stack gap="md">
