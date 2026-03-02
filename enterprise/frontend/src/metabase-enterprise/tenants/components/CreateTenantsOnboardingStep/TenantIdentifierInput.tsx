@@ -1,9 +1,8 @@
-import { t } from "ttag";
-
 import { Autocomplete, Stack, Text } from "metabase/ui";
 import type { FieldId } from "metabase-types/api";
 
 import { useFieldDistinctValues } from "./hooks/use-field-distinct-values";
+import { getIsolationFieldConfig } from "./isolation-field-config";
 
 export const TenantIdentifierInput = ({
   value,
@@ -21,17 +20,19 @@ export const TenantIdentifierInput = ({
 
   const { values: suggestions } = useFieldDistinctValues(firstFieldId);
 
-  // Use first suggestion as placeholder hint, fallback to "1"
-  const placeholder = suggestions[0] ?? "1";
+  const config = getIsolationFieldConfig("row-column-level-security")!;
+
+  // Use first suggestion as placeholder hint, fallback to config default
+  const placeholder = suggestions[0] ?? config.placeholder;
 
   return (
     <Stack gap="xs">
       <Text fw="bold" size="sm">
-        {t`tenant_identifier`}
+        {config.label}
       </Text>
 
       <Text c="text-secondary" size="xs" mb="sm">
-        {t`Users will only see rows where this matches the value in the column you selected.`}
+        {config.description}
       </Text>
 
       <Autocomplete
