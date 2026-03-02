@@ -653,10 +653,11 @@ describe("scenarios - embedding hub", () => {
           const tenants = response.body.data;
 
           const acmeTenant = tenants.find(
-            (t: { slug: string }) => t.slug === "acme-corp-slug",
+            (tenant: { slug: string }) => tenant.slug === "acme-corp-slug",
           );
+
           const betaTenant = tenants.find(
-            (t: { slug: string }) => t.slug === "beta-inc-slug",
+            (tenant: { slug: string }) => tenant.slug === "beta-inc-slug",
           );
 
           expect(acmeTenant).to.exist;
@@ -1270,11 +1271,13 @@ describe("scenarios - embedding hub", () => {
 
       cy.log("tenant should have database_role attribute");
       cy.request("GET", "/api/ee/tenant").should((response) => {
-        const tenant = response.body.data.find(
-          (t: { slug: string }) => t.slug === "acme-corp",
+        const tenantBySlug = response.body.data.find(
+          (tenant: { slug: string }) => tenant.slug === "acme-corp",
         );
-        expect(tenant).to.exist;
-        expect(tenant.attributes).to.deep.equal({ database_role: "acme_role" });
+
+        expect(tenantBySlug.attributes).to.deep.equal({
+          database_role: "acme_role",
+        });
       });
     });
   });
@@ -1326,11 +1329,13 @@ describe("scenarios - embedding hub", () => {
 
       cy.log("tenant should have database_slug attribute");
       cy.request("GET", "/api/ee/tenant").should((response) => {
-        const tenant = response.body.data.find(
-          (t: { slug: string }) => t.slug === "acme-corp",
+        const tenantBySlug = response.body.data.find(
+          (tenant: { slug: string }) => tenant.slug === "acme-corp",
         );
-        expect(tenant).to.exist;
-        expect(tenant.attributes).to.deep.equal({ database_slug: "acme-db" });
+
+        expect(tenantBySlug.attributes).to.deep.equal({
+          database_slug: "acme-db",
+        });
       });
     });
   });
