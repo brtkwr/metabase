@@ -1,4 +1,5 @@
 import { Api } from "metabase/api";
+import type { DataSegregationStrategy } from "metabase/embedding/embedding-hub/components/SetupPermissionsAndTenantsPage/DataSegregationStrategyPicker";
 
 import { listTag } from "./tags";
 
@@ -15,7 +16,9 @@ type CheckListApiStep =
   | "setup-data-segregation-strategy"
   | "data-permissions-and-enable-tenants"
   | "sso-auth-manual-tested";
-export type EmbeddingHubChecklist = Record<CheckListApiStep, boolean>;
+export type EmbeddingHubChecklist = Record<CheckListApiStep, boolean> & {
+  "active-data-segregation-strategy": DataSegregationStrategy | null;
+};
 
 export const embeddingHubApi = Api.injectEndpoints({
   endpoints: (builder) => ({

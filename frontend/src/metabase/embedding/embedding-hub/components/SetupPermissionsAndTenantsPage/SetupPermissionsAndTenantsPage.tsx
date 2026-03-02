@@ -42,6 +42,10 @@ export const SetupPermissionsAndTenantsPage = () => {
   // Track the selected field IDs from the RLS step (in-session only)
   const [selectedFieldIds, setSelectedFieldIds] = useState<FieldId[]>([]);
 
+  // Prefer in-session UI state; fall back to backend detection for reloads
+  const activeStrategy =
+    selectedStrategy ?? checklist?.["active-data-segregation-strategy"] ?? null;
+
   const isTenantsEnabled = checklist?.["enable-tenants"] ?? false;
 
   const isDataSegregationSetupDone =
@@ -171,6 +175,7 @@ export const SetupPermissionsAndTenantsPage = () => {
           <PLUGIN_TENANTS.CreateTenantsOnboardingStep
             onTenantsCreated={setCreatedTenants}
             selectedFieldIds={selectedFieldIds}
+            strategy={activeStrategy}
           />
         </OnboardingStepper.Step>
 
@@ -181,6 +186,7 @@ export const SetupPermissionsAndTenantsPage = () => {
         >
           <PLUGIN_TENANTS.TenantsSummaryOnboardingStep
             tenants={createdTenants}
+            strategy={activeStrategy}
           />
         </OnboardingStepper.Step>
       </OnboardingStepper>

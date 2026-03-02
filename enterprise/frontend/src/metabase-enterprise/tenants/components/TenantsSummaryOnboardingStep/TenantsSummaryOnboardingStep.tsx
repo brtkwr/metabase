@@ -3,6 +3,7 @@ import { push } from "react-router-redux";
 import { t } from "ttag";
 
 import { RelatedSettingCard } from "metabase/admin/components/RelatedSettingsSection";
+import type { DataSegregationStrategy } from "metabase/embedding/embedding-hub/components/SetupPermissionsAndTenantsPage/DataSegregationStrategyPicker";
 import { useDispatch } from "metabase/lib/redux";
 import type { CreatedTenantData } from "metabase/plugins/oss/tenants";
 import { Button, Flex, SimpleGrid, Stack, Text, Title } from "metabase/ui";
@@ -17,10 +18,33 @@ import { TenantSummaryCard } from "./TenantSummaryCard";
  */
 const MAX_FETCHED_TENANTS_TO_SHOW = 3;
 
+const ISOLATION_ATTRIBUTE_KEYS = [
+  "tenant_identifier",
+  "database_role",
+  "database_slug",
+] as const;
+
+function getIsolationFieldLabel(
+  strategy: DataSegregationStrategy | null | undefined,
+): string | null {
+  switch (strategy) {
+    case "row-column-level-security":
+      return "tenant_identifier";
+    case "connection-impersonation":
+      return "database_role";
+    case "database-routing":
+      return "database_slug";
+    default:
+      return null;
+  }
+}
+
 export const TenantsSummaryOnboardingStep = ({
   tenants,
+  strategy,
 }: {
   tenants: CreatedTenantData[];
+  strategy?: DataSegregationStrategy | null;
 }) => {
   const dispatch = useDispatch();
 
@@ -41,12 +65,22 @@ export const TenantsSummaryOnboardingStep = ({
     const lastTenants =
       tenantsData?.data?.slice(-MAX_FETCHED_TENANTS_TO_SHOW) ?? [];
 
-    return lastTenants.map((tenant) => ({
-      name: tenant.name,
-      slug: tenant.slug,
-      tenantIdentifier: tenant.attributes?.tenant_identifier ?? "",
-    }));
+    return lastTenants.map((tenant) => {
+      // Detect which isolation attribute is set on the tenant
+      const isolationKey = ISOLATION_ATTRIBUTE_KEYS.find(
+        (key) => tenant.attributes?.[key] != null,
+      );
+      return {
+        name: tenant.name,
+        slug: tenant.slug,
+        tenantIdentifier: isolationKey
+          ? (tenant.attributes?.[isolationKey] ?? "")
+          : "",
+      };
+    });
   }, [tenants, tenantsData]);
+
+  const isolationFieldLabel = getIsolationFieldLabel(strategy);
 
   return (
     <Stack gap="lg">
@@ -59,7 +93,10 @@ export const TenantsSummaryOnboardingStep = ({
           <TenantSummaryCard
             key={tenant.slug}
             name={tenant.name}
-            tenantIdentifier={tenant.tenantIdentifier || null}
+            isolationFieldLabel={
+              tenant.tenantIdentifier ? isolationFieldLabel : null
+            }
+            isolationFieldValue={tenant.tenantIdentifier || null}
             slug={tenant.slug}
           />
         ))}

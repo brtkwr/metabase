@@ -70,6 +70,13 @@
       (t2/exists? :model/ConnectionImpersonation)
       (t2/exists? :model/DatabaseRouter)))
 
+(defn- active-data-segregation-strategy []
+  (cond
+    (has-configured-sandboxes?)              "row-column-level-security"
+    (t2/exists? :model/ConnectionImpersonation) "connection-impersonation"
+    (t2/exists? :model/DatabaseRouter)       "database-routing"
+    :else                                    nil))
+
 (defn- has-published-guest-embed? []
   ;; Check if at least one card or dashboard has embedding enabled (is published as a guest embed)
   (or (t2/exists? :model/Card :enable_embedding true)
@@ -96,6 +103,7 @@
      "enable-tenants"                    enable-tenants?
      "create-tenants"                    create-tenants?
      "setup-data-segregation-strategy"   setup-data-segregation-strategy?
+     "active-data-segregation-strategy"  (active-data-segregation-strategy)
 
      ;; for the "configure SSO" sub-checklist page
      "sso-configured"                     (has-configured-sso?)
@@ -115,6 +123,7 @@
    ["enable-tenants"                       :boolean]
    ["create-tenants"                       :boolean]
    ["setup-data-segregation-strategy"      :boolean]
+   ["active-data-segregation-strategy"     [:maybe [:enum "row-column-level-security" "connection-impersonation" "database-routing"]]]
    ["sso-auth-manual-tested"               :boolean]])
 
 (api.macros/defendpoint :get "/checklist" :- EmbeddingHubChecklist

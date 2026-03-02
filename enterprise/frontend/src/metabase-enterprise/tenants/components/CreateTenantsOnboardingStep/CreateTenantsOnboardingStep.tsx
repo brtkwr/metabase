@@ -1,10 +1,9 @@
-/* eslint-disable metabase/no-literal-metabase-strings -- This string only shows for admins */
-
 import { useCallback, useState } from "react";
 import { t } from "ttag";
 
 import { getErrorMessage } from "metabase/api/utils";
 import { useToast } from "metabase/common/hooks";
+import type { DataSegregationStrategy } from "metabase/embedding/embedding-hub/components/SetupPermissionsAndTenantsPage/DataSegregationStrategyPicker";
 import { slugify } from "metabase/lib/formatting";
 import type { CreatedTenantData } from "metabase/plugins/oss/tenants";
 import {
@@ -23,6 +22,47 @@ import { useCreateTenantMutation } from "../../../api/tenants";
 
 import { TenantIdentifierInput } from "./TenantIdentifierInput";
 
+interface IsolationFieldConfig {
+  /** The attribute key sent to the API, e.g. "tenant_identifier" */
+  attributeKey: string;
+  /** The label displayed above the input */
+  label: string;
+  /** The description shown below the label */
+  description: string;
+  /** Placeholder text for the input */
+  placeholder: string;
+}
+
+function getIsolationFieldConfig(
+  strategy: DataSegregationStrategy | null | undefined,
+): IsolationFieldConfig | null {
+  switch (strategy) {
+    case "row-column-level-security":
+      return {
+        attributeKey: "tenant_identifier",
+        label: "tenant_identifier",
+        description: t`Users will only see rows where this matches the value in the column you selected.`,
+        placeholder: "1",
+      };
+    case "connection-impersonation":
+      return {
+        attributeKey: "database_role",
+        label: "database_role",
+        description: t`Users will access data based on the privileges granted to this role in the database.`,
+        placeholder: "tenant_role",
+      };
+    case "database-routing":
+      return {
+        attributeKey: "database_slug",
+        label: "database_slug",
+        description: t`Match a slug for a destination DB as defined in the data source's DB routing settings.`,
+        placeholder: "tenant-db-slug",
+      };
+    default:
+      return null;
+  }
+}
+
 const createEmptyTenant = (index: number): CreatedTenantData => ({
   name: `Tenant ${index}`,
   tenantIdentifier: "",
@@ -32,9 +72,11 @@ const createEmptyTenant = (index: number): CreatedTenantData => ({
 export const CreateTenantsOnboardingStep = ({
   onTenantsCreated,
   selectedFieldIds,
+  strategy,
 }: {
   onTenantsCreated?: (tenants: CreatedTenantData[]) => void;
   selectedFieldIds?: FieldId[];
+  strategy?: DataSegregationStrategy | null;
 }) => {
   const [sendToast] = useToast();
 
@@ -74,16 +116,21 @@ export const CreateTenantsOnboardingStep = ({
     setTenants((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  const fieldConfig = getIsolationFieldConfig(strategy);
+
   const handleCreateTenants = useCallback(async () => {
     try {
       // Create all tenants sequentially
       for (const tenant of tenants) {
+        const attributes =
+          fieldConfig && tenant.tenantIdentifier
+            ? { [fieldConfig.attributeKey]: tenant.tenantIdentifier }
+            : {};
+
         await createTenant({
           name: tenant.name,
           slug: tenant.slug,
-          attributes: {
-            tenant_identifier: tenant.tenantIdentifier,
-          },
+          attributes,
         }).unwrap();
       }
 
@@ -102,21 +149,21 @@ export const CreateTenantsOnboardingStep = ({
         message: getErrorMessage(error, t`Failed to create tenants`),
       });
     }
-  }, [tenants, createTenant, sendToast, onTenantsCreated]);
+  }, [tenants, fieldConfig, createTenant, sendToast, onTenantsCreated]);
 
-  const isValid = tenants.every(
-    (tenant) =>
-      tenant.name.trim() &&
-      tenant.tenantIdentifier.trim() &&
-      tenant.slug.trim(),
-  );
+  const isValid = tenants.every((tenant) => {
+    if (!tenant.name.trim() || !tenant.slug.trim()) {
+      return false;
+    }
+    // Isolation field is only required when a strategy is selected
+    if (fieldConfig && !tenant.tenantIdentifier.trim()) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <Stack gap="md">
-      <Text c="text-secondary" size="sm" lh="lg">
-        {t`Use tenants to isolate external organizations on the same Metabase instance. Tenant users will see rows in the tables you selected where the value in the columns you chose in the previous step equals the value you enter in this screen for the tenant_identifier attribute.`}
-      </Text>
-
       <Stack gap="md">
         {tenants.map((tenant, index) => (
           <Paper key={index} withBorder p="md" radius="md">
@@ -144,13 +191,29 @@ export const CreateTenantsOnboardingStep = ({
                 )}
               </Group>
 
-              <TenantIdentifierInput
-                value={tenant.tenantIdentifier}
-                onChange={(value) =>
-                  updateTenantCard(index, "tenantIdentifier", value)
-                }
-                selectedFieldIds={selectedFieldIds}
-              />
+              {strategy === "row-column-level-security" && (
+                <TenantIdentifierInput
+                  value={tenant.tenantIdentifier}
+                  onChange={(value) =>
+                    updateTenantCard(index, "tenantIdentifier", value)
+                  }
+                  selectedFieldIds={selectedFieldIds}
+                />
+              )}
+
+              {(strategy === "connection-impersonation" ||
+                strategy === "database-routing") &&
+                fieldConfig && (
+                  <TenantFormField
+                    label={fieldConfig.label}
+                    description={fieldConfig.description}
+                    value={tenant.tenantIdentifier}
+                    onChange={(value) =>
+                      updateTenantCard(index, "tenantIdentifier", value)
+                    }
+                    placeholder={fieldConfig.placeholder}
+                  />
+                )}
 
               <TenantFormField
                 label={t`Tenant slug`}
