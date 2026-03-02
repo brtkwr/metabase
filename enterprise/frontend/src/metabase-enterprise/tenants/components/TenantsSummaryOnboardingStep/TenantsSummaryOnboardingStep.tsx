@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { push } from "react-router-redux";
+import { match } from "ts-pattern";
 import { t } from "ttag";
 
 import { RelatedSettingCard } from "metabase/admin/components/RelatedSettingsSection";
@@ -23,21 +24,6 @@ const ISOLATION_ATTRIBUTE_KEYS = [
   "database_role",
   "database_slug",
 ] as const;
-
-function getIsolationFieldLabel(
-  strategy: DataSegregationStrategy | null | undefined,
-): string | null {
-  switch (strategy) {
-    case "row-column-level-security":
-      return "tenant_identifier";
-    case "connection-impersonation":
-      return "database_role";
-    case "database-routing":
-      return "database_slug";
-    default:
-      return null;
-  }
-}
 
 export const TenantsSummaryOnboardingStep = ({
   tenants,
@@ -70,6 +56,7 @@ export const TenantsSummaryOnboardingStep = ({
       const isolationKey = ISOLATION_ATTRIBUTE_KEYS.find(
         (key) => tenant.attributes?.[key] != null,
       );
+
       return {
         name: tenant.name,
         slug: tenant.slug,
@@ -144,3 +131,12 @@ const RelatedSettingsSection = () => (
     />
   </SimpleGrid>
 );
+
+export const getIsolationFieldLabel = (
+  strategy: DataSegregationStrategy | null | undefined,
+): string | null =>
+  match(strategy)
+    .with("row-column-level-security", () => "tenant_identifier")
+    .with("connection-impersonation", () => "database_role")
+    .with("database-routing", () => "database_slug")
+    .otherwise(() => null);

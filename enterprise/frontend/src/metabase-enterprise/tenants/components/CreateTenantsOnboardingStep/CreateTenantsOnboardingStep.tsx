@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { match } from "ts-pattern";
 import { t } from "ttag";
 
 import { getErrorMessage } from "metabase/api/utils";
@@ -22,52 +23,14 @@ import { useCreateTenantMutation } from "../../../api/tenants";
 
 import { TenantIdentifierInput } from "./TenantIdentifierInput";
 
-interface IsolationFieldConfig {
-  /** The attribute key sent to the API, e.g. "tenant_identifier" */
+type IsolationFieldConfig = {
+  /** The attribute key sent to the API, e.g. tenant_identifier */
   attributeKey: string;
-  /** The label displayed above the input */
+
   label: string;
-  /** The description shown below the label */
   description: string;
-  /** Placeholder text for the input */
   placeholder: string;
-}
-
-function getIsolationFieldConfig(
-  strategy: DataSegregationStrategy | null | undefined,
-): IsolationFieldConfig | null {
-  switch (strategy) {
-    case "row-column-level-security":
-      return {
-        attributeKey: "tenant_identifier",
-        label: "tenant_identifier",
-        description: t`Users will only see rows where this matches the value in the column you selected.`,
-        placeholder: "1",
-      };
-    case "connection-impersonation":
-      return {
-        attributeKey: "database_role",
-        label: "database_role",
-        description: t`Users will access data based on the privileges granted to this role in the database.`,
-        placeholder: "tenant_role",
-      };
-    case "database-routing":
-      return {
-        attributeKey: "database_slug",
-        label: "database_slug",
-        description: t`Match a slug for a destination DB as defined in the data source's DB routing settings.`,
-        placeholder: "tenant-db-slug",
-      };
-    default:
-      return null;
-  }
-}
-
-const createEmptyTenant = (index: number): CreatedTenantData => ({
-  name: `Tenant ${index}`,
-  tenantIdentifier: "",
-  slug: `tenant-${index}`,
-});
+};
 
 export const CreateTenantsOnboardingStep = ({
   onTenantsCreated,
@@ -280,3 +243,33 @@ const TenantFormField = ({
     />
   </Stack>
 );
+
+const getIsolationFieldConfig = (
+  strategy: DataSegregationStrategy | null | undefined,
+): IsolationFieldConfig | null =>
+  match(strategy)
+    .with("row-column-level-security", () => ({
+      attributeKey: "tenant_identifier",
+      label: "tenant_identifier",
+      description: t`Users will only see rows where this matches the value in the column you selected.`,
+      placeholder: "1",
+    }))
+    .with("connection-impersonation", () => ({
+      attributeKey: "database_role",
+      label: "database_role",
+      description: t`Users will access data based on the privileges granted to this role in the database.`,
+      placeholder: "tenant_role",
+    }))
+    .with("database-routing", () => ({
+      attributeKey: "database_slug",
+      label: "database_slug",
+      description: t`Match a slug for a destination DB as defined in the data source's DB routing settings.`,
+      placeholder: "tenant-db-slug",
+    }))
+    .otherwise(() => null);
+
+const createEmptyTenant = (index: number): CreatedTenantData => ({
+  name: `Tenant ${index}`,
+  tenantIdentifier: "",
+  slug: `tenant-${index}`,
+});
