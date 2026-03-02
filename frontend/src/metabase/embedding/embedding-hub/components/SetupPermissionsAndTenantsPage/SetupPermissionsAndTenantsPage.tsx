@@ -27,7 +27,9 @@ const SETUP_GUIDE_PATH = "/admin/embedding/setup-guide";
 
 export const SetupPermissionsAndTenantsPage = () => {
   const stepperRef = useRef<OnboardingStepperHandle>(null);
-  const { data: checklist } = useGetEmbeddingHubChecklistQuery();
+
+  const { data: checklistResponse } = useGetEmbeddingHubChecklistQuery();
+  const checklist = checklistResponse?.checklist;
 
   // The "Which data segregation strategy does your database use?"
   // is a purely UI step for choosing which strategy to use.
@@ -44,7 +46,7 @@ export const SetupPermissionsAndTenantsPage = () => {
 
   // Prefer in-session UI state; fall back to backend detection for reloads
   const activeStrategy =
-    selectedStrategy ?? checklist?.["active-data-segregation-strategy"] ?? null;
+    selectedStrategy ?? checklistResponse?.["data-isolation-strategy"] ?? null;
 
   const isTenantsEnabled = checklist?.["enable-tenants"] ?? false;
 
