@@ -79,9 +79,9 @@ export const SetupPermissionsAndTenantsPage = () => {
 
   const lockedSteps = useMemo(() => {
     return {
-      // Even if the data strategy step was completed before,
-      // UI needs to know which strategy to re-configure.
-      "select-data": !isStrategyConfirmed,
+      // Unlock once we know the strategy — either from in-session confirmation
+      // or from the backend on reload.
+      "select-data": activeStrategy === null,
       "create-tenants": !isPickDataStrategyDone,
       summary: !(
         isTenantsEnabled &&
@@ -91,7 +91,7 @@ export const SetupPermissionsAndTenantsPage = () => {
       ),
     };
   }, [
-    isStrategyConfirmed,
+    activeStrategy,
     isPickDataStrategyDone,
     isTenantsEnabled,
     isDataSegregationSetupDone,
@@ -128,7 +128,7 @@ export const SetupPermissionsAndTenantsPage = () => {
           title={t`Which data segregation strategy does your database use?`}
         >
           <DataSegregationStrategyPicker
-            value={selectedStrategy}
+            value={activeStrategy}
             onChange={(value) => {
               setSelectedStrategy(value);
               setIsStrategyConfirmed(false);
@@ -147,9 +147,9 @@ export const SetupPermissionsAndTenantsPage = () => {
           stepId="select-data"
           title={t`Select data to make available`}
           // Database routing step links to documentation
-          hideTitleOnActive={selectedStrategy === "database-routing"}
+          hideTitleOnActive={activeStrategy === "database-routing"}
         >
-          {match(selectedStrategy)
+          {match(activeStrategy)
             .with("row-column-level-security", () => (
               <RlsDataSelector
                 onSuccess={(fieldIds) => {
