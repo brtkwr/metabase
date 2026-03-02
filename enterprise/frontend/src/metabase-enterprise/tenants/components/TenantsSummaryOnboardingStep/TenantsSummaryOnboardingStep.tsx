@@ -4,7 +4,7 @@ import { match } from "ts-pattern";
 import { t } from "ttag";
 
 import { RelatedSettingCard } from "metabase/admin/components/RelatedSettingsSection";
-import type { DataSegregationStrategy } from "metabase/embedding/embedding-hub/components/SetupPermissionsAndTenantsPage/DataSegregationStrategyPicker";
+import type { DataSegregationStrategy } from "metabase/embedding/embedding-hub";
 import { useDispatch } from "metabase/lib/redux";
 import type { CreatedTenantData } from "metabase/plugins/oss/tenants";
 import { Button, Flex, SimpleGrid, Stack, Text, Title } from "metabase/ui";

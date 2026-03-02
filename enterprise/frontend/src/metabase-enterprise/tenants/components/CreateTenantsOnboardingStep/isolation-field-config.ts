@@ -1,7 +1,7 @@
 import { match } from "ts-pattern";
 import { t } from "ttag";
 
-import type { DataSegregationStrategy } from "metabase/embedding/embedding-hub/components/SetupPermissionsAndTenantsPage/DataSegregationStrategyPicker";
+import type { DataSegregationStrategy } from "metabase/embedding/embedding-hub";
 
 export type IsolationFieldConfig = {
   /** The attribute key sent to the API, e.g. tenant_identifier */
