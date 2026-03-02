@@ -21,6 +21,7 @@ import type { FieldId } from "metabase-types/api";
 
 import { useCreateTenantMutation } from "../../../api/tenants";
 
+import S from "./CreateTenantsOnboardingStep.module.css";
 import { TenantIdentifierInput } from "./TenantIdentifierInput";
 
 type IsolationFieldConfig = {
@@ -140,8 +141,9 @@ export const CreateTenantsOnboardingStep = ({
                     updateTenantCard(index, "name", e.target.value)
                   }
                   placeholder={t`Tenant name`}
-                  size="md"
                   flex={1}
+                  fw="bold"
+                  classNames={{ input: S.TenantNameInput }}
                 />
                 {tenants.length > 1 && (
                   <Button
