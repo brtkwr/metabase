@@ -127,6 +127,16 @@
                                :thread_ts thread-ts}))
       res)))
 
+(defn fetch-message
+  "Fetch a single Slack message by channel and timestamp."
+  [client channel ts]
+  (let [{:keys [messages]} (:body (slack-get client "/conversations.history"
+                                             {:channel   channel
+                                              :latest    ts
+                                              :limit     1
+                                              :inclusive true}))]
+    (first messages)))
+
 (defn delete-message
   "Remove a Slack message"
   [client message]
