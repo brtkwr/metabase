@@ -63,6 +63,7 @@ export function PermissionsEditorContent({
     );
   }, [entities, debouncedFilter]);
 
+  const [scrollElement, setScrollElement] = useState(null);
   const handleFilterChange = (e) => setFilter(e.target.value);
 
   return (
@@ -93,13 +94,14 @@ export function PermissionsEditorContent({
         />
       </EditorFilterContainer>
 
-      <PermissionTableWrapper>
+      <PermissionTableWrapper ref={setScrollElement}>
         <PermissionsTable
           entities={filteredEntities || entities}
           columns={columns}
           onSelect={onSelect}
           onChange={onChange}
           onAction={onAction}
+          scrollElement={scrollElement}
           emptyState={
             <EditorEmptyStateContainer>
               <EmptyState message={t`Nothing here`} icon="folder" />
