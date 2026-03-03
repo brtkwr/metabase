@@ -37,11 +37,37 @@
 (def dynamic-schema-version
   "Code version of dynamic schema (index_table_xyzs). If higher than what's found in db dynamic schema migration will
   be attempted."
-  1)
+  2)
+
+(defn- add-personal-owner-id-column!
+  "Migration 2: Add `personal_owner_id` column to index tables for SQL-level personal collection filtering."
+  [tx index-metadata]
+  (let [table-names (->> (jdbc/execute! tx
+                                        (sql/format {:select [:table_name]
+                                                     :from [(keyword (:metadata-table-name index-metadata))]
+                                                     :where [[:< :index_version 2]]
+                                                     :group-by [:table_name]}))
+                         (map (keyword (:metadata-table-name index-metadata) "table_name"))
+                         set)]
+    (doseq [table-name table-names]
+      (let [has-col? (seq (jdbc/execute-one! tx
+                                             (sql/format {:select [[[:raw "1"] :has]]
+                                                          :from [:information_schema.columns]
+                                                          :where [:and
+                                                                  [:= :table_name [:inline table-name]]
+                                                                  [:= :column_name [:inline "personal_owner_id"]]]})))]
+        (when-not has-col?
+          (jdbc/execute! tx (sql/format {:alter-table [(keyword table-name)]
+                                         :add-column [[:personal_owner_id :int]]})))))
+    (when (seq table-names)
+      (jdbc/execute! tx (sql/format {:update (keyword (:metadata-table-name index-metadata))
+                                     :set {:index_version 2}
+                                     :where [[:in :table_name (vec table-names)]]})))))
 
 (defn migrate-dynamic-schema!
   "Migrate runtime-managed schema, ie. schema of `index_table_...` tables. Migration author is responsible for removing
   leftovers if necessary."
-  [_tx {_index-metadata :index-metadata _embedding-model :embedding-model :as _opts}]
+  [tx {:keys [index-metadata] :as _opts}]
   ;; migration 1: all tables dropped in schema migration in single function call
-  )
+  ;; migration 2: add personal_owner_id column to index tables
+  (add-personal-owner-id-column! tx index-metadata))
