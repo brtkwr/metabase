@@ -440,4 +440,3 @@
                  (catch Exception stop-e
                    (log/debug stop-e "[slackbot] Failed to stop stream during error cleanup")))
                (send-fallback "Something went wrong. Please try again.")))))))))
-
